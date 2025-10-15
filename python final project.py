@@ -1,4 +1,4 @@
-# ===== 資料處理相關 (B 同學負責) =====
+# ===== 資料+籌碼處理相關 (B 同學負責) =====有餘裕:最後印出勝負局數，贏錢數、賠錢數
 
 def save_game_result(result):
     # TODO: B 同學在這裡實作儲存遊戲結果（如勝負、玩家分數）
@@ -10,12 +10,12 @@ def load_game_history():
     print("功能開發中：讀取遊戲歷史...")
     return []
 
-# ===== 遊戲邏輯核心 (A, C 同學負責) =====
+# ===== 遊戲邏輯核心 ( C 同學負責) =====
 
 import random
 
 def deal_card():
-    # TODO: A 同學負責，隨機發一張牌 (1-11)，代表 A 到 K
+    # TODO: C 同學負責，隨機發一張牌 (1-11)，代表 A 到 K
     print("功能開發中：發一張牌...")
     return random.randint(1, 11)
 
@@ -99,3 +99,4 @@ def main():
 # 程式執行入口
 if __name__ == "__main__":
     main()
+
