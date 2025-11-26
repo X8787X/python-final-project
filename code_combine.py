@@ -25,116 +25,79 @@ def load_game_history():
 # ===== 遊戲邏輯核心 ( C 同學負責) =====
 
 def deal_card():
-    # 發一張牌：採用標準 21 點（A=11，JQK=10），一般牌值 2~10
-    card = random.choice([
-        11,  # A
-        2,3,4,5,6,7,8,9,10,  # 數字牌
-        10,10,10  # J Q K
-    ])
+    cards = [11, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10]
+    card = random.choice(cards)
     return card
 
 def calculate_score(cards):
-    score = sum(cards)
+    if sum(cards) == 21 and len(cards) == 2:
+        return 0
 
-    # 若 A 當 11 爆掉（> 21），把 A 改成 1
-    while score > 21 and 11 in cards:
-        cards[cards.index(11)] = 1
-        score = sum(cards)
+    if 11 in cards and sum(cards) > 21:
+        cards.remove(11)
+        cards.append(1)
 
-    return score
+    return sum(cards)
 
-def compare(player_score, dealer_score):
-    if player_score > 21:
-        return "玩家爆牌，莊家勝"
-    if dealer_score > 21:
-        return "莊家爆牌，玩家勝"
-    if player_score > dealer_score:
-        return "玩家勝"
-    if dealer_score > player_score:
+def compare(u_score, c_score):
+    if u_score == c_score:
+        return "平手"
+    elif c_score == 0:
         return "莊家勝"
-    return "平手"
+    elif u_score == 0:
+        return "玩家勝"
+    elif u_score > 21:
+        return "玩家爆牌，莊家勝"
+    elif c_score > 21:
+        return "莊家爆牌，玩家勝"
+    elif u_score > c_score:
+        return "玩家勝"
+    else:
+        return "莊家勝"
 
 
 # ===== 玩家流程操作 (A 同學負責) =====
 # 增加多玩家機制
 
 def play_game():
-    print("\n=== 🎮 開始一輪 Blackjack ===")
+    print(logo)
+    user_cards = []
+    computer_cards = []
+    computer_score = -1
+    user_score = -1
+    is_game_over = False
 
-    # 多玩家輸入
-    num_players = int(input("請輸入玩家人數（1~4）："))
-    players = []
+    for _ in range(2):
+        user_cards.append(deal_card())
+        computer_cards.append(deal_card())
 
-    for i in range(num_players):
-        name = input(f"玩家 {i+1} 名字：")
-        players.append({
-            "name": name,
-            "cards": [],
-            "score": 0,
-            "result": ""
-        })
+    while not is_game_over:
+        user_score = calculate_score(user_cards)
+        computer_score = calculate_score(computer_cards)
+        print(f"Your cards: {user_cards}, current score: {user_score}")
+        print(f"Computer's first card: {computer_cards[0]}")
 
-    # 莊家
-    dealer_cards = []
-
-    # → 發初始兩張牌
-    for p in players:
-        p["cards"] = [deal_card(), deal_card()]
-    dealer_cards = [deal_card(), deal_card()]
-
-    # → 顯示初始牌
-    print("\n===== 初始發牌 =====")
-    for p in players:
-        print(f"{p['name']} 的牌：{p['cards']}（合計：{calculate_score(p['cards'])}）")
-    print(f"莊家的明牌：{dealer_cards[0]}")
-
-    # → 每位玩家依序行動
-    for p in players:
-        print(f"\n--- {p['name']} 的回合 ---")
-        while True:
-            score = calculate_score(p["cards"])
-            print(f"目前牌：{p['cards']}（{score} 分）")
-
-            if score > 21:
-                print("💥 你爆牌了！")
-                break
-
-            choice = input("是否要牌？(y/n): ")
-            if choice.lower() == "y":
-                p["cards"].append(deal_card())
+        if user_score == 0 or computer_score == 0 or user_score > 21:
+            is_game_over = True
+        else:
+            user_should_deal = input("Type 'y' to get another card, type 'n' to pass: ")
+            if user_should_deal == "y":
+                user_cards.append(deal_card())
             else:
-                break
+                is_game_over = True
 
-    # → 莊家回合
-    print("\n===== 莊家回合 =====")
-    print(f"莊家起始牌：{dealer_cards}（{calculate_score(dealer_cards)}）")
+    while computer_score != 0 and computer_score < 17:
+        computer_cards.append(deal_card())
+        computer_score = calculate_score(computer_cards)
 
-    while calculate_score(dealer_cards) < 17:
-        dealer_cards.append(deal_card())
-        print(f"莊家補牌 → {dealer_cards}（{calculate_score(dealer_cards)}）")
+    print(f"Your final hand: {user_cards}, final score: {user_score}")
+    print(f"Computer's final hand: {computer_cards}, final score: {computer_score}")
+    print(compare(user_score, computer_score))
 
-    dealer_score = calculate_score(dealer_cards)
 
-    # → 最終判定
-    print("\n===== 最終結果 =====")
-    for p in players:
-        p["score"] = calculate_score(p["cards"])
-        p["result"] = compare(p["score"], dealer_score)
-
-        print(f"\n玩家：{p['name']}")
-        print(f"你的牌：{p['cards']}（{p['score']} 分）")
-        print(f"莊家：{dealer_cards}（{dealer_score} 分）")
-        print(f"結果：{p['result']}")
-
-        # 儲存紀錄
-        save_game_result({
-            "player": p["name"],
-            "player_cards": p["cards"],
-            "player_score": p["score"],
-            "dealer_cards": dealer_cards,
-            "dealer_score": dealer_score,
-            "result": p["result"]
-        })
+while input("Do you want to play a game of Blackjack? Type 'y' or 'n': ") == "y":
+    print("\n" * 20)
+    play_game()
 
 
 # ===== 主程式流程 =====
