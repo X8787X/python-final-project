@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import simpledialog, messagebox
-import random
+import random, json, os
 
 # -------------------------------
 # 撲克牌資料
@@ -13,6 +13,8 @@ unicode_cards = {
 }
 suits=["♠","♥","♦","♣"]
 card_back="🂠"
+
+HISTORY_FILE = "game_history.txt"
 
 # -------------------------------
 # 牌組
@@ -79,6 +81,23 @@ def format_cards(cards, hide_second=False):
     return " ".join(syms)
 
 # -------------------------------
+# 存取歷史紀錄
+# -------------------------------
+def save_game_history(record):
+    history = load_game_history()
+    history.append(record)
+    with open(HISTORY_FILE,"w",encoding="utf-8") as f:
+        json.dump(history,f,ensure_ascii=False, indent=2)
+
+def load_game_history():
+    if not os.path.exists(HISTORY_FILE):
+        with open(HISTORY_FILE,"w",encoding="utf-8") as f:
+            json.dump([],f)
+        return []
+    with open(HISTORY_FILE,"r",encoding="utf-8") as f:
+        return json.load(f)
+
+# -------------------------------
 # GUI
 # -------------------------------
 class BlackjackGUI:
@@ -87,25 +106,31 @@ class BlackjackGUI:
         self.players=[]
         self.current_player_idx=0
         self.dealer={"name":"莊家","cards":[],"score":0}
-        self.history=[]
         self.root=tk.Tk()
         self.root.title("Blackjack 21 點")
-        self.info=tk.Label(self.root,text="")
+        
+        # 顯示資訊
+        self.info=tk.Label(self.root,text="",font=("Arial",14))
         self.info.pack()
+        
+        # Button
         self.btn_hit=tk.Button(self.root,text="補牌",command=self.hit)
         self.btn_hit.pack()
         self.btn_stand=tk.Button(self.root,text="停牌",command=self.stand)
         self.btn_stand.pack()
         self.btn_start=tk.Button(self.root,text="開始遊戲",command=self.start_game)
         self.btn_start.pack()
+        self.btn_history=tk.Button(self.root,text="歷史紀錄",command=self.show_history)
+        self.btn_history.pack()
         self.btn_exit=tk.Button(self.root,text="結束遊戲",command=self.exit_game)
         self.btn_exit.pack()
+        
         self.start_game()
         self.root.mainloop()
 
     def start_game(self):
         self.players=[]
-        n=int(simpledialog.askinteger("玩家人數","請輸入玩家人數"))
+        n=int(simpledialog.askinteger("玩家人數","請輸入玩家人數",minvalue=1,maxvalue=4))
         for i in range(n):
             name=simpledialog.askstring("玩家名稱",f"輸入玩家{i+1}名稱")
             self.players.append(Player(name))
@@ -120,7 +145,7 @@ class BlackjackGUI:
         self.player=self.players[self.current_player_idx]
         self.player.cards=[]
         self.player.score=0
-        self.player.bet=simpledialog.askinteger("下注金額",f"{self.player.name} 籌碼:{self.player.chips} 下注:")
+        self.player.bet=simpledialog.askinteger("下注金額",f"{self.player.name} 籌碼:{self.player.chips} 下注:",minvalue=1,maxvalue=self.player.chips)
         self.deal_to_player(self.player)
         self.update_display()
 
@@ -132,13 +157,12 @@ class BlackjackGUI:
         p.score=calculate_score(p.cards)
 
     def hit(self):
-        p=self.players[self.current_player_idx]
         if len(self.deck)==0:
             self.deck=create_deck()
-        p.cards.append(self.deck.pop())
-        p.score=calculate_score(p.cards)
+        self.player.cards.append(self.deck.pop())
+        self.player.score=calculate_score(self.player.cards)
         self.update_display()
-        if p.score>21:
+        if self.player.score>21:
             self.current_player_idx+=1
             self.next_player()
 
@@ -156,7 +180,8 @@ class BlackjackGUI:
             self.dealer["score"]=calculate_score(self.dealer["cards"])
 
     def show_results(self):
-        msg="莊家牌: "+format_cards(self.dealer["cards"])+"\n\n"
+        msg="=== 莊家結果 ===\n"
+        msg+=f"莊家牌: {format_cards(self.dealer['cards'])}, 分數:{self.dealer['score']}\n\n"
         for p in self.players:
             p.result=compare(p.score,self.dealer["score"])
             if "玩家勝" in p.result:
@@ -164,18 +189,43 @@ class BlackjackGUI:
             elif "莊家勝" in p.result:
                 p.chips-=p.bet
             msg+=f"{p.name}: {format_cards(p.cards)}, 分數:{p.score}, 結果:{p.result}, 籌碼:{p.chips}\n"
+            # 存歷史
+            save_game_history({
+                "player":p.name,
+                "user_cards":[{"suit":c["suit"],"rank":c["rank"]} for c in p.cards],
+                "dealer_cards":[{"suit":c["suit"],"rank":c["rank"]} for c in self.dealer["cards"]],
+                "user_score":p.score,
+                "dealer_score":self.dealer["score"],
+                "result":p.result,
+                "chips_after":p.chips
+            })
         messagebox.showinfo("遊戲結果",msg)
 
     def update_display(self):
         self.info.config(text=f"{self.player.name} 牌: {format_cards(self.player.cards)}, 分數:{self.player.score}")
 
+    def show_history(self):
+        history=load_game_history()
+        if not history:
+            messagebox.showinfo("歷史紀錄","目前無歷史紀錄")
+            return
+        msg="=== 歷史紀錄 ===\n"
+        for h in history:
+            uc = " ".join([unicode_cards[c["suit"]][c["rank"]] for c in h["user_cards"]])
+            dc = " ".join([unicode_cards[c["suit"]][c["rank"]] for c in h["dealer_cards"]])
+            msg+=f"{h['player']}: {uc} ({h['user_score']}分) vs 莊家 {dc} ({h['dealer_score']}分) => {h['result']}, 籌碼:{h['chips_after']}\n"
+        messagebox.showinfo("歷史紀錄",msg)
+
     def exit_game(self):
+        history=load_game_history()
         msg="=== 總結 ===\n"
-        for p in self.players:
-            total_games = 1 # 在桌面版每次為單局，可擴充
-            wins = 1 if "玩家勝" in p.result else 0
-            win_rate=wins/total_games*100
-            msg+=f"{p.name}: 勝率:{win_rate:.2f}%, 籌碼:{p.chips}\n"
+        players=set(h["player"] for h in history)
+        for p in players:
+            total=sum(1 for h in history if h["player"]==p)
+            wins=sum(1 for h in history if h["player"]==p and "玩家勝" in h["result"])
+            chips=max(h["chips_after"] for h in history if h["player"]==p)
+            win_rate=wins/total*100 if total>0 else 0
+            msg+=f"{p}: 總局數:{total}, 勝率:{win_rate:.2f}%, 籌碼:{chips}\n"
         messagebox.showinfo("遊戲總結",msg)
         self.root.destroy()
 
