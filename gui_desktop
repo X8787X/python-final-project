@@ -1,0 +1,185 @@
+import tkinter as tk
+from tkinter import simpledialog, messagebox
+import random
+
+# -------------------------------
+# 撲克牌資料
+# -------------------------------
+unicode_cards = {
+    "♠": {1:"🂡",2:"🂢",3:"🂣",4:"🂤",5:"🂥",6:"🂦",7:"🂧",8:"🂨",9:"🂩",10:"🂪",11:"🂫",12:"🂭",13:"🂮"},
+    "♥": {1:"🂱",2:"🂲",3:"🂳",4:"🂴",5:"🂵",6:"🂶",7:"🂷",8:"🂸",9:"🂹",10:"🂺",11:"🂻",12:"🂽",13:"🂾"},
+    "♦": {1:"🃁",2:"🃂",3:"🃃",4:"🃄",5:"🃅",6:"🃆",7:"🃇",8:"🃈",9:"🃉",10:"🃊",11:"🃋",12:"🃍",13:"🃎"},
+    "♣": {1:"🃑",2:"🃒",3:"🃓",4:"🃔",5:"🃕",6:"🃖",7:"🃗",8:"🃘",9:"🃙",10:"🃚",11:"🃛",12:"🃝",13:"🃞"}
+}
+suits=["♠","♥","♦","♣"]
+card_back="🂠"
+
+# -------------------------------
+# 牌組
+# -------------------------------
+def create_deck():
+    deck=[]
+    for s in suits:
+        for r in range(1,14):
+            value = 11 if r==1 else 10 if r>=11 else r
+            deck.append({"suit":s,"rank":r,"value":value,"symbol":unicode_cards[s][r]})
+    random.shuffle(deck)
+    return deck
+
+# -------------------------------
+# 玩家 class
+# -------------------------------
+class Player:
+    def __init__(self,name):
+        self.name=name
+        self.chips=1000
+        self.cards=[]
+        self.bet=0
+        self.score=0
+        self.result=""
+
+# -------------------------------
+# 計算分數
+# -------------------------------
+def calculate_score(cards):
+    values=[c["value"] for c in cards]
+    if sum(values)==21 and len(values)==2:
+        return 0
+    while 11 in values and sum(values)>21:
+        for c in cards:
+            if c["value"]==11:
+                c["value"]=1
+                break
+        values=[c["value"] for c in cards]
+    return sum(values)
+
+def compare(u,d):
+    if u==d:
+        return "平手"
+    elif d==0:
+        return "莊家勝"
+    elif u==0:
+        return "玩家勝"
+    elif u>21:
+        return "玩家爆牌，莊家勝"
+    elif d>21:
+        return "莊家爆牌，玩家勝"
+    elif u>d:
+        return "玩家勝"
+    else:
+        return "莊家勝"
+
+def format_cards(cards, hide_second=False):
+    syms=[]
+    for i,c in enumerate(cards):
+        if hide_second and i>=1:
+            syms.append(card_back)
+        else:
+            syms.append(c["symbol"])
+    return " ".join(syms)
+
+# -------------------------------
+# GUI
+# -------------------------------
+class BlackjackGUI:
+    def __init__(self):
+        self.deck=create_deck()
+        self.players=[]
+        self.current_player_idx=0
+        self.dealer={"name":"莊家","cards":[],"score":0}
+        self.history=[]
+        self.root=tk.Tk()
+        self.root.title("Blackjack 21 點")
+        self.info=tk.Label(self.root,text="")
+        self.info.pack()
+        self.btn_hit=tk.Button(self.root,text="補牌",command=self.hit)
+        self.btn_hit.pack()
+        self.btn_stand=tk.Button(self.root,text="停牌",command=self.stand)
+        self.btn_stand.pack()
+        self.btn_start=tk.Button(self.root,text="開始遊戲",command=self.start_game)
+        self.btn_start.pack()
+        self.btn_exit=tk.Button(self.root,text="結束遊戲",command=self.exit_game)
+        self.btn_exit.pack()
+        self.start_game()
+        self.root.mainloop()
+
+    def start_game(self):
+        self.players=[]
+        n=int(simpledialog.askinteger("玩家人數","請輸入玩家人數"))
+        for i in range(n):
+            name=simpledialog.askstring("玩家名稱",f"輸入玩家{i+1}名稱")
+            self.players.append(Player(name))
+        self.current_player_idx=0
+        self.next_player()
+
+    def next_player(self):
+        if self.current_player_idx>=len(self.players):
+            self.dealer_play()
+            self.show_results()
+            return
+        self.player=self.players[self.current_player_idx]
+        self.player.cards=[]
+        self.player.score=0
+        self.player.bet=simpledialog.askinteger("下注金額",f"{self.player.name} 籌碼:{self.player.chips} 下注:")
+        self.deal_to_player(self.player)
+        self.update_display()
+
+    def deal_to_player(self,p):
+        if len(self.deck)<2:
+            self.deck=create_deck()
+        p.cards.append(self.deck.pop())
+        p.cards.append(self.deck.pop())
+        p.score=calculate_score(p.cards)
+
+    def hit(self):
+        p=self.players[self.current_player_idx]
+        if len(self.deck)==0:
+            self.deck=create_deck()
+        p.cards.append(self.deck.pop())
+        p.score=calculate_score(p.cards)
+        self.update_display()
+        if p.score>21:
+            self.current_player_idx+=1
+            self.next_player()
+
+    def stand(self):
+        self.current_player_idx+=1
+        self.next_player()
+
+    def dealer_play(self):
+        self.dealer["cards"]=[]
+        self.dealer["cards"].append(self.deck.pop())
+        self.dealer["cards"].append(self.deck.pop())
+        self.dealer["score"]=calculate_score(self.dealer["cards"])
+        while self.dealer["score"]<17 and self.dealer["score"]!=0:
+            self.dealer["cards"].append(self.deck.pop())
+            self.dealer["score"]=calculate_score(self.dealer["cards"])
+
+    def show_results(self):
+        msg="莊家牌: "+format_cards(self.dealer["cards"])+"\n\n"
+        for p in self.players:
+            p.result=compare(p.score,self.dealer["score"])
+            if "玩家勝" in p.result:
+                p.chips+=p.bet
+            elif "莊家勝" in p.result:
+                p.chips-=p.bet
+            msg+=f"{p.name}: {format_cards(p.cards)}, 分數:{p.score}, 結果:{p.result}, 籌碼:{p.chips}\n"
+        messagebox.showinfo("遊戲結果",msg)
+
+    def update_display(self):
+        self.info.config(text=f"{self.player.name} 牌: {format_cards(self.player.cards)}, 分數:{self.player.score}")
+
+    def exit_game(self):
+        msg="=== 總結 ===\n"
+        for p in self.players:
+            total_games = 1 # 在桌面版每次為單局，可擴充
+            wins = 1 if "玩家勝" in p.result else 0
+            win_rate=wins/total_games*100
+            msg+=f"{p.name}: 勝率:{win_rate:.2f}%, 籌碼:{p.chips}\n"
+        messagebox.showinfo("遊戲總結",msg)
+        self.root.destroy()
+
+# -------------------------------
+# 啟動遊戲
+# -------------------------------
+BlackjackGUI()
