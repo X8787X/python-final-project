@@ -1,7 +1,7 @@
-# 安裝 ipywidgets（Colab 可能已經安裝）
+# 安裝 ipywidgets（Colab 可能已安裝）
 !pip install ipywidgets -q
 
-import random, json, os
+import random, json
 from IPython.display import display, clear_output
 import ipywidgets as widgets
 
@@ -14,7 +14,6 @@ unicode_cards = {
     "♦": {1:"🃁", 2:"🃂", 3:"🃃", 4:"🃄", 5:"🃅", 6:"🃆", 7:"🃇", 8:"🃈", 9:"🃉", 10:"🃊", 11:"🃋", 12:"🃍", 13:"🃎"},
     "♣": {1:"🃑", 2:"🃒", 3:"🃓", 4:"🃔", 5:"🃕", 6:"🃖", 7:"🃗", 8:"🃘", 9:"🃙", 10:"🃚", 11:"🃛", 12:"🃝", 13:"🃞"}
 }
-
 suits = ["♠","♥","♦","♣"]
 card_back = "🂠"
 
@@ -25,12 +24,7 @@ def create_deck():
     deck = []
     for s in suits:
         for r in range(1,14):
-            if r == 1:
-                value = 11
-            elif r >= 11:
-                value = 10
-            else:
-                value = r
+            value = 11 if r==1 else 10 if r>=11 else r
             deck.append({"suit":s, "rank":r, "value":value, "symbol":unicode_cards[s][r]})
     random.shuffle(deck)
     return deck
@@ -40,9 +34,9 @@ def create_deck():
 # -------------------------------
 def calculate_score(cards):
     values = [c["value"] for c in cards]
-    if sum(values) == 21 and len(values) == 2:
+    if sum(values)==21 and len(values)==2:
         return 0
-    while 11 in values and sum(values) > 21:
+    while 11 in values and sum(values)>21:
         for c in cards:
             if c["value"]==11:
                 c["value"]=1
@@ -85,7 +79,7 @@ def format_cards(cards, hide_second=False):
     return f"{' '.join(syms)}  [{', '.join(nums)}]"
 
 # -------------------------------
-# 遊戲邏輯
+# 玩家 class
 # -------------------------------
 class Player:
     def __init__(self,name):
@@ -96,14 +90,15 @@ class Player:
         self.score=0
         self.result=""
 
-deck = create_deck()
+# -------------------------------
+# 全局變數
+# -------------------------------
+deck=create_deck()
 players=[]
 dealer={"name":"莊家","cards":[],"score":0}
-
-history=[]
-
 current_player_idx=0
 game_over=False
+history=[]
 
 # -------------------------------
 # Widget
@@ -111,8 +106,8 @@ game_over=False
 out = widgets.Output()
 btn_hit = widgets.Button(description="補牌")
 btn_stand = widgets.Button(description="停牌")
-btn_next = widgets.Button(description="下一位玩家")
 btn_start = widgets.Button(description="開始遊戲")
+btn_exit = widgets.Button(description="結束遊戲")
 
 # -------------------------------
 # 遊戲函數
@@ -157,16 +152,20 @@ def update_display():
         print(f"你的牌: {format_cards(p.cards)}, 分數: {p.score}")
         print(f"莊家的牌: {format_cards(dealer['cards'], hide_second=True)}")
 
+# -------------------------------
+# 回合控制
+# -------------------------------
 def start_turn(b):
-    global current_player_idx, game_over
+    global current_player_idx, game_over, players
     with out:
         clear_output()
         n=int(input("請輸入玩家人數:"))
+        players=[]
         for i in range(n):
             name=input(f"輸入玩家{i+1}名稱:")
             players.append(Player(name))
         print("所有玩家初始化完成，每位玩家1000籌碼。")
-        game_over=False
+        current_player_idx=0
         next_player()
 
 def next_player(b=None):
@@ -194,7 +193,7 @@ def next_player(b=None):
                     "result":p.result,
                     "chips_after":p.chips
                 })
-        print("\n遊戲結束。請重啟遊戲開始新局。")
+        print("\n遊戲結束。可按「開始遊戲」開始新局，或按「結束遊戲」查看總勝率。")
         return
     # 進入下一玩家
     p=players[current_player_idx]
@@ -230,11 +229,23 @@ def btn_stand_click(b):
     current_player_idx+=1
     next_player()
 
+def exit_game(b):
+    with out:
+        clear_output()
+        print("=== 遊戲總結 ===")
+        for p in players:
+            total_games = sum(1 for h in history if h["player"]==p.name)
+            wins = sum(1 for h in history if h["player"]==p.name and "玩家勝" in h["result"])
+            win_rate = wins/total_games*100 if total_games>0 else 0
+            print(f"{p.name} 總局數: {total_games}, 勝率: {win_rate:.2f}%, 籌碼: {p.chips}")
+        print("\n感謝遊玩！")
+
 # -------------------------------
 # Button 事件綁定
 # -------------------------------
 btn_hit.on_click(btn_hit_click)
 btn_stand.on_click(btn_stand_click)
 btn_start.on_click(start_turn)
+btn_exit.on_click(exit_game)
 
-display(btn_start, btn_hit, btn_stand, out)
+display(btn_start, btn_hit, btn_stand, btn_exit, out)
