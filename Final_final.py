@@ -11,10 +11,21 @@ def ensure_history_file_exists():# 確認有歷史紀錄的檔案
         with open(HISTORY_FILE, "w", encoding="utf-8") as f:
             json.dump([], f, ensure_ascii=False, indent=2)
 
-def load_game_history():# 加載檔案
+def load_game_history():
     ensure_history_file_exists()
     with open(HISTORY_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
+        content = f.read().strip()
+        if not content:
+            return []
+        try:
+            data = json.loads(content)
+
+            if isinstance(data, list):
+                return data
+            else:
+                return []
+        except json.JSONDecodeError:
+            return []
 
 def save_game_result(record):# 存檔
     ensure_history_file_exists()
@@ -222,7 +233,8 @@ def main():
 
         if choice == "1":
             if chips <= 0:
-                print("你已經沒有籌碼了，按4來查看戰績和數據...")
+                print("你已經沒有籌碼了，送你1000，再接再厲")
+                chips = 1000
                 continue
 
             chips = play_game(chips)
@@ -250,25 +262,46 @@ def main():
             print(f"莊家勝：{lose}")
             print(f"平手：{tie}")
 
+
         elif choice == "4":
+
             # 離開前存一次目前籌碼
+
             save_player_state({"chips": chips})
 
             history = load_game_history()
+
             print("\n=====  本次遊玩總結（依歷史紀錄） =====")
+
             total = len(history)
 
             if total > 0:
+
                 win = sum(1 for h in history if "玩家勝" in h["result"])
+
                 rate = win / total * 100
+
                 print(f"總局數：{total}")
+
                 print(f"玩家勝：{win}")
+
                 print(f"勝率：{rate:.2f}%")
+
             else:
+
                 print("沒有紀錄，無法計算勝率")
 
-            print(f"\n離開時籌碼餘額：{chips}")
+            print(f"\n贏得籌碼：{chips}")
+
+
+            with open(HISTORY_FILE, "w", encoding="utf-8") as f:
+
+                json.dump([], f, ensure_ascii=False, indent=2)
+
+            print("\n歷史紀錄已清除。")
+
             print("\n感謝遊玩！再見 ")
+
             break
 
         else:
