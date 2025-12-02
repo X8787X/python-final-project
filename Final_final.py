@@ -105,7 +105,7 @@ def compare(user_score, dealer_score):
         return "莊家勝"
 
 
-#讓輸出好看一點
+#讓輸出好看一點、隱藏莊家手牌
 def format_cards(cards, hide_second=False):
     symbols = []
     nums = []
@@ -279,3 +279,4 @@ def main():
 if __name__ == "__main__":
 
     main()
+
