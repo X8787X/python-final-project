@@ -34,6 +34,11 @@ def save_game_result(record):# 存檔
     with open(HISTORY_FILE, "w", encoding="utf-8") as f:
         json.dump(history, f, ensure_ascii=False, indent=2)
 
+def clear_game_history():
+    #清空歷史紀錄檔案內容，重設為空 list。
+    with open(HISTORY_FILE, "w", encoding="utf-8") as f:
+        json.dump([], f, ensure_ascii=False, indent=2)
+
 # 籌碼計算
 def ensure_state_file_exists():
     # 如果找不到紀錄，就建立一個 chips=1000
@@ -217,24 +222,26 @@ def play_game(chips):
 # 主函式
 def main():
     ensure_history_file_exists()
-    # 讀取玩家狀態（包含籌碼）
+    ensure_state_file_exists()
     state = load_player_state()
     chips = state.get("chips", 1000)
 
     while True:
-        print("🎲 Blackjack 21 點遊戲")
+        print("\n Blackjack 21 點遊戲")
         print(f"目前籌碼：{chips}")
         print("1. 開始遊戲")
         print("2. 查看歷史紀錄")
         print("3. 統計勝負")
         print("4. 離開遊戲")
+        print("5. 清空歷史紀錄")
 
         choice = input("請選擇功能：")
 
         if choice == "1":
             if chips <= 0:
-                print("你已經沒有籌碼了，送你1000，再接再厲")
+                print("你已經沒有籌碼了，發給你1000...")
                 chips = 1000
+                save_player_state({"chips": chips})
                 continue
 
             chips = play_game(chips)
@@ -244,30 +251,38 @@ def main():
         elif choice == "2":
             history = load_game_history()
             print("\n=====  歷史紀錄 =====")
-            for h in history:
-                print(
-                    f"玩家: {format_history_cards(h['user_cards'])} "
-                    f"莊家: {format_history_cards(h['dealer_cards'])} "
-                    f"結果: {h['result']}  "
-                    f"籌碼: {h['chips_before']} → {h['chips_after']}"
-                )
+            if not history:
+                print("目前沒有任何歷史紀錄。")
+            else:
+                for h in history:
+                    print(
+                        f"玩家: {format_history_cards(h['user_cards'])} "
+                        f"莊家: {format_history_cards(h['dealer_cards'])} "
+                        f"結果: {h['result']}  "
+                        f"籌碼: {h['chips_before']} → {h['chips_after']}"
+                    )
 
         elif choice == "3":
             history = load_game_history()
             print("\n=====  勝負統計 =====")
-            win = sum(1 for h in history if "玩家勝" in h["result"])
-            lose = sum(1 for h in history if "莊家勝" in h["result"])
-            tie = sum(1 for h in history if "平手" in h["result"])
-            print(f"玩家勝：{win}")
-            print(f"莊家勝：{lose}")
-            print(f"平手：{tie}")
+            if not history:
+                print("目前沒有任何歷史紀錄。")
+            else:
+                win = sum(1 for h in history if "玩家勝" in h["result"])
+                lose = sum(1 for h in history if "莊家勝" in h["result"])
+                tie = sum(1 for h in history if "平手" in h["result"])
+                print(f"玩家勝：{win}")
+                print(f"莊家勝：{lose}")
+                print(f"平手：{tie}")
 
 
         elif choice == "4":
 
-            # 離開前存一次目前籌碼
+            print("\n離開遊戲並重設籌碼為 1000 ...")
 
-            save_player_state({"chips": chips})
+            chips = 1000
+
+            save_player_state({"chips": chips})  
 
             history = load_game_history()
 
@@ -291,18 +306,19 @@ def main():
 
                 print("沒有紀錄，無法計算勝率")
 
-            print(f"\n贏得籌碼：{chips}")
-
-
-            with open(HISTORY_FILE, "w", encoding="utf-8") as f:
-
-                json.dump([], f, ensure_ascii=False, indent=2)
-
-            print("\n歷史紀錄已清除。")
+            print(f"\n離開時籌碼已重設為：{chips}")
 
             print("\n感謝遊玩！再見 ")
 
             break
+
+        elif choice == "5":
+            confirm = input("確定要清空所有歷史紀錄嗎？此操作無法復原。（是/否）：")
+            if confirm == "是":
+                clear_game_history()
+                print("歷史紀錄已清空。")
+            else:
+                print("已取消清空歷史紀錄。")
 
         else:
             print("請輸入有效選項！")
