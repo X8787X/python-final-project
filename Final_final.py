@@ -239,8 +239,7 @@ def main():
 
         if choice == "1":
             if chips <= 0:
-                print("你已經沒有籌碼了，發給你1000...")
-                chips = 1000
+                print("你已經沒有籌碼了，請按 4 查看本次遊玩數據")
                 save_player_state({"chips": chips})
                 continue
 
@@ -282,7 +281,7 @@ def main():
 
             chips = 1000
 
-            save_player_state({"chips": chips})  
+            save_player_state({"chips": chips})
 
             history = load_game_history()
 
@@ -327,6 +326,8 @@ def main():
 if __name__ == "__main__":
 
     main()
+
+
 
 
 
