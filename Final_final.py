@@ -227,7 +227,7 @@ def main():
     chips = state.get("chips", 1000)
 
     while True:
-        print("\n Blackjack 21 點遊戲")
+        print("\n🎲 Blackjack 21 點遊戲")
         print(f"目前籌碼：{chips}")
         print("1. 開始遊戲")
         print("2. 查看歷史紀錄")
@@ -249,7 +249,7 @@ def main():
 
         elif choice == "2":
             history = load_game_history()
-            print("\n=====  歷史紀錄 =====")
+            print("\n=====  📜歷史紀錄 =====")
             if not history:
                 print("目前沒有任何歷史紀錄。")
             else:
@@ -263,7 +263,7 @@ def main():
 
         elif choice == "3":
             history = load_game_history()
-            print("\n=====  勝負統計 =====")
+            print("\n=====  📊勝負統計 =====")
             if not history:
                 print("目前沒有任何歷史紀錄。")
             else:
@@ -285,7 +285,7 @@ def main():
 
             history = load_game_history()
 
-            print("\n=====  本次遊玩總結（依歷史紀錄） =====")
+            print("\n=====  📊本次遊玩總結（依歷史紀錄） =====")
 
             total = len(history)
 
@@ -307,7 +307,7 @@ def main():
 
             print(f"\n離開時籌碼已重設為：{chips}")
 
-            print("\n感謝遊玩！再見 ")
+            print("\n感謝遊玩！再見👋 ")
 
             break
 
@@ -326,7 +326,6 @@ def main():
 if __name__ == "__main__":
 
     main()
-
 
 
 
