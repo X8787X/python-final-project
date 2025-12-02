@@ -129,7 +129,7 @@ def format_history_cards(cards):
 
 def play_game(chips):
 
-    print(f"🂡 新的一局開始！目前籌碼：{chips}")
+    print(f"💰 新的一局開始！目前籌碼：{chips}")
 
     # 下注
     while True:
@@ -211,7 +211,7 @@ def main():
     chips = state.get("chips", 1000)
 
     while True:
-        print("\n Blackjack 21 點遊戲")
+        print("🎲 Blackjack 21 點遊戲")
         print(f"目前籌碼：{chips}")
         print("1. 開始遊戲")
         print("2. 查看歷史紀錄")
@@ -278,6 +278,7 @@ def main():
 if __name__ == "__main__":
 
     main()
+
 
 
 
