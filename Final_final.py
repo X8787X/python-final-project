@@ -5,54 +5,43 @@ import random
 HISTORY_FILE = "game_history.txt"
 STATE_FILE = "player_state.json"
 
-# ============================
-#   檔案處理：歷史紀錄
-# ============================
-
-def ensure_history_file_exists():
+#歷史紀錄
+def ensure_history_file_exists():#確認有歷史紀錄的檔案
     if not os.path.exists(HISTORY_FILE):
         with open(HISTORY_FILE, "w", encoding="utf-8") as f:
             json.dump([], f, ensure_ascii=False, indent=2)
 
-def load_game_history():
+def load_game_history():#加載檔案
     ensure_history_file_exists()
     with open(HISTORY_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
-def save_game_result(record):
+def save_game_result(record):#存檔
     ensure_history_file_exists()
     history = load_game_history()
     history.append(record)
     with open(HISTORY_FILE, "w", encoding="utf-8") as f:
         json.dump(history, f, ensure_ascii=False, indent=2)
 
-
-# ============================
-#   檔案處理：玩家狀態（籌碼）
-# ============================
-
+#籌碼計算
 def ensure_state_file_exists():
-    """如果沒有玩家狀態檔，就建立一個預設 chips=1000 的檔案。"""
+    """如果找不到紀錄，就建立一個 chips=1000"""
     if not os.path.exists(STATE_FILE):
         with open(STATE_FILE, "w", encoding="utf-8") as f:
             json.dump({"chips": 1000}, f, ensure_ascii=False, indent=2)
 
 def load_player_state():
-    """讀取玩家狀態，主要是籌碼數。"""
+    """讀取玩家籌碼數"""
     ensure_state_file_exists()
     with open(STATE_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
 def save_player_state(state):
-    """寫回玩家狀態。"""
+    """存檔"""
     with open(STATE_FILE, "w", encoding="utf-8") as f:
         json.dump(state, f, ensure_ascii=False, indent=2)
 
-
-# ============================
-#  撲克牌符號資料
-# ============================
-
+#鋪克牌庫
 unicode_cards = {
     "♠": {1:"🂡", 2:"🂢", 3:"🂣", 4:"🂤", 5:"🂥", 6:"🂦", 7:"🂧", 8:"🂨", 9:"🂩", 10:"🂪", 11:"🂫", 12:"🂭", 13:"🂮"},
     "♥": {1:"🂱", 2:"🂲", 3:"🂳", 4:"🂴", 5:"🂵", 6:"🂶", 7:"🂷", 8:"🂸", 9:"🂹", 10:"🂺", 11:"🂻", 12:"🂽", 13:"🂾"},
@@ -116,10 +105,7 @@ def compare(user_score, dealer_score):
         return "莊家勝"
 
 
-# ============================
-#   顯示排版
-# ============================
-
+#讓輸出好看一點
 def format_cards(cards, hide_second=False):
     symbols = []
     nums = []
@@ -217,10 +203,7 @@ def play_game(chips):
     return chips
 
 
-# ============================
-#   主選單
-# ============================
-
+#主函式
 def main():
     ensure_history_file_exists()
     # 讀取玩家狀態（包含籌碼）
@@ -294,4 +277,5 @@ def main():
 
 
 if __name__ == "__main__":
+
     main()
