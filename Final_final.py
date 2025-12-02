@@ -25,23 +25,23 @@ def save_game_result(record):#存檔
 
 #籌碼計算
 def ensure_state_file_exists():
-    """如果找不到紀錄，就建立一個 chips=1000"""
+    #如果找不到紀錄，就建立一個 chips=1000
     if not os.path.exists(STATE_FILE):
         with open(STATE_FILE, "w", encoding="utf-8") as f:
             json.dump({"chips": 1000}, f, ensure_ascii=False, indent=2)
 
 def load_player_state():
-    """讀取玩家籌碼數"""
+    #讀取玩家籌碼數
     ensure_state_file_exists()
     with open(STATE_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
 def save_player_state(state):
-    """存檔"""
+    #存檔
     with open(STATE_FILE, "w", encoding="utf-8") as f:
         json.dump(state, f, ensure_ascii=False, indent=2)
 
-#鋪克牌庫
+#撲克牌庫
 unicode_cards = {
     "♠": {1:"🂡", 2:"🂢", 3:"🂣", 4:"🂤", 5:"🂥", 6:"🂦", 7:"🂧", 8:"🂨", 9:"🂩", 10:"🂪", 11:"🂫", 12:"🂭", 13:"🂮"},
     "♥": {1:"🂱", 2:"🂲", 3:"🂳", 4:"🂴", 5:"🂵", 6:"🂶", 7:"🂷", 8:"🂸", 9:"🂹", 10:"🂺", 11:"🂻", 12:"🂽", 13:"🂾"},
@@ -222,8 +222,7 @@ def main():
 
         if choice == "1":
             if chips <= 0:
-                print("你已經沒有籌碼了，發給你1000...")
-                chips = 1000
+                print("你已經沒有籌碼了，按4來查看戰績和數據...")
                 continue
 
             chips = play_game(chips)
@@ -279,4 +278,5 @@ def main():
 if __name__ == "__main__":
 
     main()
+
 
