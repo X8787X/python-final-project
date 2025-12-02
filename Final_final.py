@@ -5,25 +5,25 @@ import random
 HISTORY_FILE = "game_history.txt"
 STATE_FILE = "player_state.json"
 
-#歷史紀錄
-def ensure_history_file_exists():#確認有歷史紀錄的檔案
+# 歷史紀錄
+def ensure_history_file_exists():# 確認有歷史紀錄的檔案
     if not os.path.exists(HISTORY_FILE):
         with open(HISTORY_FILE, "w", encoding="utf-8") as f:
             json.dump([], f, ensure_ascii=False, indent=2)
 
-def load_game_history():#加載檔案
+def load_game_history():# 加載檔案
     ensure_history_file_exists()
     with open(HISTORY_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
-def save_game_result(record):#存檔
+def save_game_result(record):# 存檔
     ensure_history_file_exists()
     history = load_game_history()
     history.append(record)
     with open(HISTORY_FILE, "w", encoding="utf-8") as f:
         json.dump(history, f, ensure_ascii=False, indent=2)
 
-#籌碼計算
+# 籌碼計算
 def ensure_state_file_exists():
     #如果找不到紀錄，就建立一個 chips=1000
     if not os.path.exists(STATE_FILE):
@@ -31,17 +31,17 @@ def ensure_state_file_exists():
             json.dump({"chips": 1000}, f, ensure_ascii=False, indent=2)
 
 def load_player_state():
-    #讀取玩家籌碼數
+    # 讀取玩家籌碼數
     ensure_state_file_exists()
     with open(STATE_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
 def save_player_state(state):
-    #存檔
+    # 存檔
     with open(STATE_FILE, "w", encoding="utf-8") as f:
         json.dump(state, f, ensure_ascii=False, indent=2)
 
-#撲克牌庫
+# 撲克牌庫
 unicode_cards = {
     "♠": {1:"🂡", 2:"🂢", 3:"🂣", 4:"🂤", 5:"🂥", 6:"🂦", 7:"🂧", 8:"🂨", 9:"🂩", 10:"🂪", 11:"🂫", 12:"🂭", 13:"🂮"},
     "♥": {1:"🂱", 2:"🂲", 3:"🂳", 4:"🂴", 5:"🂵", 6:"🂶", 7:"🂷", 8:"🂸", 9:"🂹", 10:"🂺", 11:"🂻", 12:"🂽", 13:"🂾"},
@@ -80,7 +80,7 @@ def calculate_score(cards):
     if sum(values) == 21 and len(values) == 2:
         return 0
 
-    #ACE特殊規則
+    # ACE特殊規則
     if 11 in values and sum(values) > 21:
         ace = next(c for c in cards if c["value"] == 11)
         ace["value"] = 1
@@ -105,7 +105,7 @@ def compare(user_score, dealer_score):
         return "莊家勝"
 
 
-#讓輸出好看一點、隱藏莊家手牌
+# 讓輸出好看一點、隱藏莊家手牌
 def format_cards(cards, hide_second=False):
     symbols = []
     nums = []
@@ -203,7 +203,7 @@ def play_game(chips):
     return chips
 
 
-#主函式
+# 主函式
 def main():
     ensure_history_file_exists()
     # 讀取玩家狀態（包含籌碼）
@@ -278,5 +278,6 @@ def main():
 if __name__ == "__main__":
 
     main()
+
 
 
