@@ -25,7 +25,7 @@ def save_game_result(record):# 存檔
 
 # 籌碼計算
 def ensure_state_file_exists():
-    #如果找不到紀錄，就建立一個 chips=1000
+    # 如果找不到紀錄，就建立一個 chips=1000
     if not os.path.exists(STATE_FILE):
         with open(STATE_FILE, "w", encoding="utf-8") as f:
             json.dump({"chips": 1000}, f, ensure_ascii=False, indent=2)
@@ -278,6 +278,7 @@ def main():
 if __name__ == "__main__":
 
     main()
+
 
 
 
